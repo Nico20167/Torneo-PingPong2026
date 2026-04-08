@@ -490,6 +490,16 @@
   <div class="section-title">Cuadro Final</div>
   <div class="section-sub">Se genera automáticamente al completar las 3 rondas Swiss</div>
 
+  <!-- BARRAGES -->
+  <div class="bracket-section">
+    <div class="bracket-label">
+      <span>⚔️</span>
+      <span class="bracket-label-text orange">Barrajes de clasificación</span>
+      <span style="color:var(--muted);font-size:13px;font-family:'DM Mono',monospace">— Puestos 13→20</span>
+    </div>
+    <div class="bracket-rounds" id="bracket-barrages"></div>
+  </div>
+
   <!-- GRAN CAMPEONATO -->
   <div class="bracket-section">
     <div class="bracket-label">
@@ -561,7 +571,7 @@
       <strong>🏆 Clasificación para la fase final</strong><br>
       Los <strong>8 primeros</strong> tras las 3 rondas acceden al Gran Campeonato.<br>
       Los <strong>10 restantes</strong> juegan el Pequeño Campeonato.<br>
-      Los perdedores de los octavos de cada campeonato pasan a la Consolante correspondiente.
+      Los perdedores de los quartos de cada campeonato pasan a la Consolante correspondiente.
     </div>
     <div class="info-box">
       <strong>🎯 Fase final — cruce de cuadro</strong><br>
@@ -596,15 +606,14 @@ const ROUNDS = [
     matches: [
       { p1: "Chloé",    p2: "Ambre",     date: "Lun 13 abr - 13:30", score1: null, score2: null },
       { p1: "Bastien",  p2: "Loïc",      date: "Lun 13 abr - 14:00", score1: null, score2: null },
-      { p1: "Albert",   p2: "Tom",       date: "Mar 14 abr - 13:30", score1: null, score2: null },
-      { p1: "Romain",   p2: "Mathieu",   date: "Mar 14 abr - 14:00", score1: null, score2: null },
-      { p1: "Imad",     p2: "Maria",     date: "Mie 15 abr - 13:30", score1: null, score2: null },
-      { p1: "Alice",    p2: "Anne-cha",  date: "Mie 15 abr - 14:00", score1: null, score2: null },
-      { p1: "Ramji",    p2: "Nico M",    date: "Jue 16 abr - 13:30", score1: null, score2: null },
-      { p1: "Gonzalo",  p2: "Nico N",    date: "Jue 16 abr - 14:00", score1: null, score2: null },
-      { p1: "Christian",p2: "Daniele",   date: "Vie 17 abr - 13:30", score1: null, score2: null },
-      { p1: "Suli",     p2: "Matias",     date: "Vie 17 abr - 14:00", score1: null, score2: null },
-      
+      { p1: "Romain",   p2: "Mathieu",   date: "Mar 14 abr - 13:30", score1: null, score2: null },
+      { p1: "Albert",   p2: "Tom",       date: "Mar 14 abr - 14:00", score1: null, score2: null },
+      { p1: "Alice",    p2: "Anne-cha",  date: "Mie 15 abr - 13:30", score1: null, score2: null },
+      { p1: "Imad",     p2: "Maria",     date: "Mie 15 abr - 14:00", score1: null, score2: null },
+      { p1: "Gonzalo",  p2: "Nico N",    date: "Jue 16 abr - 13:30", score1: null, score2: null },
+      { p1: "Ramji",    p2: "Nico M",    date: "Jue 16 abr - 14:00", score1: null, score2: null },
+      { p1: "Suli",     p2: "Matias",    date: "Vie 17 abr - 13:30", score1: null, score2: null },
+      { p1: "Christian",p2: "Daniele",   date: "Vie 17 abr - 14:00", score1: null, score2: null },
     ]
   },
   // ── RONDA 2 ──
@@ -643,12 +652,22 @@ const ROUNDS = [
 // ── CUADRO FINAL ──
 // Remplir au fur et à mesure
 const BRACKET = {
+  // ── BARRAGES (places 13→20, 4 matchs) ──
+  barrages: {
+    matches: [
+      { p1: null, p2: null, date: "TBD", score1: null, score2: null }, // 13e vs 20e
+      { p1: null, p2: null, date: "TBD", score1: null, score2: null }, // 14e vs 19e
+      { p1: null, p2: null, date: "TBD", score1: null, score2: null }, // 15e vs 18e
+      { p1: null, p2: null, date: "TBD", score1: null, score2: null }, // 16e vs 17e
+    ]
+  },
+  // ── GRAN CAMPEONATO (places 1→8) ──
   gc: {
     qf: [
-      { p1: null, p2: null, date: "TBD", score1: null, score2: null },
-      { p1: null, p2: null, date: "TBD", score1: null, score2: null },
-      { p1: null, p2: null, date: "TBD", score1: null, score2: null },
-      { p1: null, p2: null, date: "TBD", score1: null, score2: null },
+      { p1: null, p2: null, date: "TBD", score1: null, score2: null }, // 1e vs 8e
+      { p1: null, p2: null, date: "TBD", score1: null, score2: null }, // 2e vs 7e
+      { p1: null, p2: null, date: "TBD", score1: null, score2: null }, // 3e vs 6e
+      { p1: null, p2: null, date: "TBD", score1: null, score2: null }, // 4e vs 5e
     ],
     sf: [
       { p1: null, p2: null, date: "TBD", score1: null, score2: null },
@@ -657,13 +676,13 @@ const BRACKET = {
     f:  [{ p1: null, p2: null, date: "TBD", score1: null, score2: null }],
     tp: [{ p1: null, p2: null, date: "TBD", score1: null, score2: null }],
   },
+  // ── PEQUEÑO CAMPEONATO (places 9→12 + 4 gagnants barrages) ──
   pc: {
     qf: [
-      { p1: null, p2: null, date: "TBD", score1: null, score2: null },
-      { p1: null, p2: null, date: "TBD", score1: null, score2: null },
-      { p1: null, p2: null, date: "TBD", score1: null, score2: null },
-      { p1: null, p2: null, date: "TBD", score1: null, score2: null },
-      { p1: null, p2: null, date: "TBD", score1: null, score2: null },
+      { p1: null, p2: null, date: "TBD", score1: null, score2: null }, // 9e vs G.barrage4
+      { p1: null, p2: null, date: "TBD", score1: null, score2: null }, // 10e vs G.barrage3
+      { p1: null, p2: null, date: "TBD", score1: null, score2: null }, // 11e vs G.barrage2
+      { p1: null, p2: null, date: "TBD", score1: null, score2: null }, // 12e vs G.barrage1
     ],
     sf: [
       { p1: null, p2: null, date: "TBD", score1: null, score2: null },
@@ -672,6 +691,7 @@ const BRACKET = {
     f:  [{ p1: null, p2: null, date: "TBD", score1: null, score2: null }],
     tp: [{ p1: null, p2: null, date: "TBD", score1: null, score2: null }],
   },
+  // ── CONSOLANTE GC (perdants des 8es GC) ──
   cons_gc: {
     sf: [
       { p1: null, p2: null, date: "TBD", score1: null, score2: null },
@@ -679,6 +699,7 @@ const BRACKET = {
     ],
     f: [{ p1: null, p2: null, date: "TBD", score1: null, score2: null }],
   },
+  // ── CONSOLANTE PC (perdants des 8es PC) ──
   cons_pc: {
     sf: [
       { p1: null, p2: null, date: "TBD", score1: null, score2: null },
@@ -812,18 +833,25 @@ function renderBracketCol(title, matches) {
 }
 
 function renderBracket() {
+  // Barrages
+  document.getElementById('bracket-barrages').innerHTML =
+    renderBracketCol('Barrages', BRACKET.barrages.matches);
+
+  // GC
   document.getElementById('bracket-gc').innerHTML =
-    renderBracketCol('Octavos', BRACKET.gc.qf) +
+    renderBracketCol('Cuartos', BRACKET.gc.qf) +
     renderBracketCol('Semifinales', BRACKET.gc.sf) +
     renderBracketCol('3er puesto', BRACKET.gc.tp) +
     renderBracketCol('Final', BRACKET.gc.f);
 
+  // PC
   document.getElementById('bracket-pc').innerHTML =
-    renderBracketCol('Octavos', BRACKET.pc.qf) +
+    renderBracketCol('Cuartos', BRACKET.pc.qf) +
     renderBracketCol('Semifinales', BRACKET.pc.sf) +
     renderBracketCol('3er puesto', BRACKET.pc.tp) +
     renderBracketCol('Final', BRACKET.pc.f);
 
+  // Consolantes
   document.getElementById('bracket-cons').innerHTML =
     `<div style="margin-right:32px">
       <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:1px;margin-bottom:8px;padding:0 8px">CONS. GRAN CAMP.</div>
