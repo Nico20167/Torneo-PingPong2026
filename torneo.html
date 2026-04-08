@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🏓 Torneo Ping-Pong 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0e0f;
+    --surface: #17171a;
+    --surface2: #1f1f24;
+    --border: #2a2a30;
+    --accent: #e8ff47;
+    --accent2: #ff6b35;
+    --accent3: #47d4e8;
+    --text: #f0f0ee;
+    --muted: #8888a0;
+    --win: #47e89a;
+    --lose: #e84747;
+    --pending: #f0c040;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  header {
+    position: relative;
+    overflow: hidden;
+    padding: 60px 40px 50px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  header::before {
+    content: '🏓';
+    position: absolute;
+    font-size: 300px;
+    right: -40px;
+    top: -60px;
+    opacity: 0.04;
+    pointer-events: none;
+    line-height: 1;
+  }
+  .header-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(52px, 8vw, 96px);
+    line-height: 0.92;
+    letter-spacing: 2px;
+    color: var(--text);
+    margin-bottom: 20px;
+  }
+  h1 span { color: var(--accent); }
+  .header-meta {
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+  .meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .meta-item .label {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .meta-item .value {
+    font-family: 'DM Mono', monospace;
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--accent);
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  nav::-webkit-scrollbar { display: none; }
+  .nav-btn {
+    padding: 14px 22px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+  .nav-btn:hover { color: var(--text); }
+  .nav-btn.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  /* ── SECTIONS ── */
+  .section { display: none; padding: 40px; max-width: 1100px; margin: 0 auto; }
+  .section.active { display: block; }
+
+  /* ── SECTION TITLE ── */
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 42px;
+    letter-spacing: 2px;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .section-sub {
+    color: var(--muted);
+    font-size: 13px;
+    margin-bottom: 32px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* ── RANKING TABLE ── */
+  .ranking-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 40px;
+  }
+  .ranking-table th {
+    text-align: left;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .ranking-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+  }
+  .ranking-table tr:hover td { background: var(--surface); }
+  .rank-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    color: var(--muted);
+    width: 40px;
+  }
+  .rank-num.top3 { color: var(--accent); }
+  .player-name-cell { font-weight: 500; }
+  .score-badge {
+    display: inline-block;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 4px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+  }
+  .score-badge.high { color: var(--win); border-color: var(--win); background: rgba(71,232,154,0.07); }
+  .qualify-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    padding: 3px 8px;
+    border-radius: 3px;
+    text-transform: uppercase;
+  }
+  .qualify-badge.gc { background: rgba(232,255,71,0.1); color: var(--accent); border: 1px solid rgba(232,255,71,0.3); }
+  .qualify-badge.pc { background: rgba(71,212,232,0.1); color: var(--accent3); border: 1px solid rgba(71,212,232,0.3); }
+
+  /* ── ROUNDS ── */
+  .rounds-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+    margin-bottom: 32px;
+  }
+  .round-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .round-header {
+    padding: 14px 20px;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .round-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 2px;
+  }
+  .round-status {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 4px;
+  }
+  .round-status.done { background: rgba(71,232,154,0.1); color: var(--win); }
+  .round-status.active { background: rgba(232,255,71,0.1); color: var(--accent); }
+  .round-status.pending { background: var(--surface); color: var(--muted); border: 1px solid var(--border); }
+
+  .match-row {
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: background 0.15s;
+  }
+  .match-row:last-child { border-bottom: none; }
+  .match-row:hover { background: var(--surface2); }
+  .match-date {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    min-width: 72px;
+  }
+  .match-players {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+  }
+  .match-player { flex: 1; }
+  .match-player.winner { font-weight: 600; color: var(--win); }
+  .match-player.loser { color: var(--muted); }
+  .match-vs {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+  }
+  .match-score {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--accent);
+    min-width: 40px;
+    text-align: right;
+  }
+  .match-tbd { color: var(--muted); font-style: italic; font-size: 13px; }
+
+  /* ── BRACKET ── */
+  .bracket-section { margin-bottom: 48px; }
+  .bracket-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .bracket-label-text {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 2px;
+  }
+  .bracket-label-text.gold { color: var(--accent); }
+  .bracket-label-text.blue { color: var(--accent3); }
+  .bracket-label-text.orange { color: var(--accent2); }
+
+  .bracket-rounds {
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+    padding-bottom: 12px;
+  }
+  .bracket-col {
+    min-width: 200px;
+    flex: 1;
+  }
+  .bracket-col-header {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    text-align: center;
+  }
+  .bracket-matches {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 0 8px;
+  }
+  .bracket-match {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .bracket-match.final-match { border-color: var(--accent); }
+  .bracket-slot {
+    padding: 10px 14px;
+    font-size: 13px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .bracket-slot:last-child { border-bottom: none; }
+  .bracket-slot.winner { background: rgba(71,232,154,0.07); font-weight: 500; color: var(--win); }
+  .bracket-slot.tbd { color: var(--muted); font-style: italic; }
+
+  /* ── JUGADORES ── */
+  .players-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 14px;
+    margin-bottom: 40px;
+  }
+  .player-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    transition: border-color 0.2s, transform 0.2s;
+    cursor: default;
+  }
+  .player-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .player-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+  .player-card-name { font-weight: 500; font-size: 15px; margin-bottom: 4px; }
+  .player-card-stats {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .player-wins { color: var(--win); font-weight: 500; }
+
+  /* ── INFO BOX ── */
+  .info-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+  .info-box strong { color: var(--text); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 600px) {
+    header { padding: 40px 20px 36px; }
+    .section { padding: 24px 16px; }
+    nav { gap: 0; }
+    .nav-btn { padding: 12px 14px; font-size: 11px; }
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .section.active { animation: fadeIn 0.25s ease; }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+  }
+  .empty-state .icon { font-size: 40px; margin-bottom: 12px; opacity: 0.4; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-label">Temporada 2026</div>
+  <h1>TORNEO<br><span>PING-PONG</span></h1>
+  <div class="header-meta">
+    <div class="meta-item">
+      <span class="label">Jugadores</span>
+      <span class="value">18</span>
+    </div>
+    <div class="meta-item">
+      <span class="label">Formato</span>
+      <span class="value">Swiss + KO</span>
+    </div>
+    <div class="meta-item">
+      <span class="label">Rondas</span>
+      <span class="value">3</span>
+    </div>
+    <div class="meta-item">
+      <span class="label">Estado</span>
+      <span class="value" id="tournament-status">EN CURSO</span>
+    </div>
+  </div>
+</header>
+
+<nav>
+  <button class="nav-btn active" onclick="showSection('clasificacion')">Clasificación</button>
+  <button class="nav-btn" onclick="showSection('rondas')">Rondas Swiss</button>
+  <button class="nav-btn" onclick="showSection('cuadro')">Cuadro Final</button>
+  <button class="nav-btn" onclick="showSection('jugadores')">Jugadores</button>
+  <button class="nav-btn" onclick="showSection('reglas')">Reglas</button>
+</nav>
+
+<!-- ═══════════════════════════════════════
+     SECCIÓN: CLASIFICACIÓN
+═══════════════════════════════════════ -->
+<div class="section active" id="s-clasificacion">
+  <div class="section-title">Clasificación</div>
+  <div class="section-sub">Tras 3 rondas Swiss — Top 8 → Gran Campeonato · Resto → Pequeño Campeonato</div>
+
+  <div class="info-box">
+    <strong>Sistema de puntuación:</strong> 2 pts por victoria · 0 pts por derrota · En caso de empate: desempate por diferencia de sets, luego puntos totales.
+    <br><strong>Clasificación:</strong> Los <strong>8 primeros</strong> acceden al Gran Campeonato · Los <strong>10 restantes</strong> al Pequeño Campeonato.
+  </div>
+
+  <table class="ranking-table" id="ranking-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Jugador</th>
+        <th>PJ</th>
+        <th>V</th>
+        <th>D</th>
+        <th>Pts</th>
+        <th>Clasificación</th>
+      </tr>
+    </thead>
+    <tbody id="ranking-body"></tbody>
+  </table>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SECCIÓN: RONDAS SWISS
+═══════════════════════════════════════ -->
+<div class="section" id="s-rondas">
+  <div class="section-title">Rondas Swiss</div>
+  <div class="section-sub">3 rondas · emparejamiento por puntuación acumulada</div>
+
+  <div class="info-box">
+    <strong>¿Cómo funciona el sistema suizo?</strong> En la Ronda 1 los emparejamientos son libres. A partir de la Ronda 2, los jugadores con la misma puntuación se enfrentan entre sí. Así el nivel se equilibra progresivamente a lo largo de las 3 rondas.
+  </div>
+
+  <div class="rounds-grid" id="rounds-container"></div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SECCIÓN: CUADRO FINAL
+═══════════════════════════════════════ -->
+<div class="section" id="s-cuadro">
+  <div class="section-title">Cuadro Final</div>
+  <div class="section-sub">Se genera automáticamente al completar las 3 rondas Swiss</div>
+
+  <!-- GRAN CAMPEONATO -->
+  <div class="bracket-section">
+    <div class="bracket-label">
+      <span>🏆</span>
+      <span class="bracket-label-text gold">Gran Campeonato</span>
+      <span style="color:var(--muted);font-size:13px;font-family:'DM Mono',monospace">— Top 8</span>
+    </div>
+    <div class="bracket-rounds" id="bracket-gc"></div>
+  </div>
+
+  <!-- PEQUEÑO CAMPEONATO -->
+  <div class="bracket-section">
+    <div class="bracket-label">
+      <span>🥈</span>
+      <span class="bracket-label-text blue">Pequeño Campeonato</span>
+      <span style="color:var(--muted);font-size:13px;font-family:'DM Mono',monospace">— Puesto 9–18</span>
+    </div>
+    <div class="bracket-rounds" id="bracket-pc"></div>
+  </div>
+
+  <!-- CONSOLANTES -->
+  <div class="bracket-section">
+    <div class="bracket-label">
+      <span>🎖️</span>
+      <span class="bracket-label-text orange">Consolantes</span>
+      <span style="color:var(--muted);font-size:13px;font-family:'DM Mono',monospace">— Perdedores de 8vos</span>
+    </div>
+    <div class="bracket-rounds" id="bracket-cons"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SECCIÓN: JUGADORES
+═══════════════════════════════════════ -->
+<div class="section" id="s-jugadores">
+  <div class="section-title">Jugadores</div>
+  <div class="section-sub">18 participantes · temporada 2026</div>
+  <div class="players-grid" id="players-grid"></div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SECCIÓN: REGLAS
+═══════════════════════════════════════ -->
+<div class="section" id="s-reglas">
+  <div class="section-title">Reglas</div>
+  <div class="section-sub">Formato oficial del torneo</div>
+
+  <div style="display:grid;gap:16px;max-width:700px;">
+    <div class="info-box">
+      <strong>🏓 Formato de los partidos</strong><br>
+      Cada partido se juega al mejor de 3 sets. Cada set se juega a 11 puntos (diferencia mínima de 2). En caso de empate 1–1, el set decisivo también a 11 puntos.
+    </div>
+    <div class="info-box">
+      <strong>📅 Calendario</strong><br>
+      Un partido por día laborable. Las fechas de cada match están indicadas en la sección Rondas Swiss. En caso de imposibilidad, el partido puede desplazarse máximo 2 días con acuerdo mutuo.
+    </div>
+    <div class="info-box">
+      <strong>🔢 Puntuación Swiss</strong><br>
+      Victoria: <strong style="color:var(--win)">+2 puntos</strong> · Derrota: <strong style="color:var(--lose)">0 puntos</strong><br>
+      Desempate (en este orden): diferencia de sets ganados, luego diferencia de puntos totales.
+    </div>
+    <div class="info-box">
+      <strong>🏆 Clasificación para la fase final</strong><br>
+      Los <strong>8 primeros</strong> tras las 3 rondas acceden al Gran Campeonato.<br>
+      Los <strong>10 restantes</strong> juegan el Pequeño Campeonato.<br>
+      Los perdedores de los octavos de cada campeonato pasan a la Consolante correspondiente.
+    </div>
+    <div class="info-box">
+      <strong>🎯 Fase final — cruce de cuadro</strong><br>
+      8vos GC: 1º vs 8º · 2º vs 7º · 3º vs 6º · 4º vs 5º<br>
+      Semifinales y finales en eliminación directa.<br>
+      Se disputa un partido por el 3er y 4º puesto en cada campeonato.
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  DATOS DEL TORNEO — EDITAR AQUÍ
+// ═══════════════════════════════════════════════════════════
+
+const PLAYERS = [
+  "Chloé","Mathieu","Bastien","Loïc","Albert","Matias",
+  "Daniele","Maria","Romain","Ambre","Alice","Nico",
+  "Ramji","Anne-Cha","Christian","Imad","Sully","Tom"
+];
+
+// Formato de cada ronda: array de partidos
+// Cada partido: { p1, p2, date, score1, score2 }
+// score1/score2 = número de sets gagnés (ex: 2 o 1 o 0)
+// Dejar score1/score2 = null si el partido no se ha jugado aún
+
+const ROUNDS = [
+  // ── RONDA 1 ──
+  // Emparejamientos definidos manualmente — RELLENAR FECHAS Y RESULTADOS
+  {
+    label: "Ronda 1",
+    matches: [
+      { p1: "Chloé",    p2: "Mathieu",   date: "Lun 20 Ene", score1: null, score2: null },
+      { p1: "Bastien",  p2: "Loïc",      date: "Mar 21 Ene", score1: null, score2: null },
+      { p1: "Albert",   p2: "Matias",    date: "Mié 22 Ene", score1: null, score2: null },
+      { p1: "Daniele",  p2: "Maria",     date: "Jue 23 Ene", score1: null, score2: null },
+      { p1: "Romain",   p2: "Ambre",     date: "Vie 24 Ene", score1: null, score2: null },
+      { p1: "Alice",    p2: "Nico",      date: "Lun 27 Ene", score1: null, score2: null },
+      { p1: "Ramji",    p2: "Anne-Cha",  date: "Mar 28 Ene", score1: null, score2: null },
+      { p1: "Christian",p2: "Imad",      date: "Mié 29 Ene", score1: null, score2: null },
+      { p1: "Sully",    p2: "Tom",       date: "Jue 30 Ene", score1: null, score2: null },
+    ]
+  },
+  // ── RONDA 2 ──
+  // Emparejamientos a definir según resultados de Ronda 1
+  {
+    label: "Ronda 2",
+    matches: [
+      { p1: "???", p2: "???", date: "Lun 3 Feb", score1: null, score2: null },
+      { p1: "???", p2: "???", date: "Mar 4 Feb", score1: null, score2: null },
+      { p1: "???", p2: "???", date: "Mié 5 Feb", score1: null, score2: null },
+      { p1: "???", p2: "???", date: "Jue 6 Feb", score1: null, score2: null },
+      { p1: "???", p2: "???", date: "Vie 7 Feb", score1: null, score2: null },
+      { p1: "???", p2: "???", date: "Lun 10 Feb", score1: null, score2: null },
+      { p1: "???", p2: "???", date: "Mar 11 Feb", score1: null, score2: null },
+      { p1: "???", p2: "???", date: "Mié 12 Feb", score1: null, score2: null },
+      { p1: "???", p2: "???", date: "Jue 13 Feb", score1: null, score2: null },
+    ]
+  },
+  // ── RONDA 3 ──
+  {
+    label: "Ronda 3",
+    matches: [
+      { p1: "???", p2: "???", date: "Lun 17 Feb", score1: null, score2: null },
+      { p1: "???", p2: "???", date: "Mar 18 Feb", score1: null, score2: null },
+      { p1: "???", p2: "???", date: "Mié 19 Feb", score1: null, score2: null },
+      { p1: "???", p2: "???", date: "Jue 20 Feb", score1: null, score2: null },
+      { p1: "???", p2: "???", date: "Vie 21 Feb", score1: null, score2: null },
+      { p1: "???", p2: "???", date: "Lun 24 Feb", score1: null, score2: null },
+      { p1: "???", p2: "???", date: "Mar 25 Feb", score1: null, score2: null },
+      { p1: "???", p2: "???", date: "Mié 26 Feb", score1: null, score2: null },
+      { p1: "???", p2: "???", date: "Jue 27 Feb", score1: null, score2: null },
+    ]
+  }
+];
+
+// ── CUADRO FINAL ──
+// Remplir au fur et à mesure
+const BRACKET = {
+  gc: {
+    qf: [
+      { p1: null, p2: null, date: "Lun 3 Mar", score1: null, score2: null },
+      { p1: null, p2: null, date: "Mar 4 Mar", score1: null, score2: null },
+      { p1: null, p2: null, date: "Mié 5 Mar", score1: null, score2: null },
+      { p1: null, p2: null, date: "Jue 6 Mar", score1: null, score2: null },
+    ],
+    sf: [
+      { p1: null, p2: null, date: "Lun 10 Mar", score1: null, score2: null },
+      { p1: null, p2: null, date: "Mar 11 Mar", score1: null, score2: null },
+    ],
+    f:  [{ p1: null, p2: null, date: "Lun 17 Mar", score1: null, score2: null }],
+    tp: [{ p1: null, p2: null, date: "Vie 14 Mar", score1: null, score2: null }],
+  },
+  pc: {
+    qf: [
+      { p1: null, p2: null, date: "Lun 3 Mar", score1: null, score2: null },
+      { p1: null, p2: null, date: "Mar 4 Mar", score1: null, score2: null },
+      { p1: null, p2: null, date: "Mié 5 Mar", score1: null, score2: null },
+      { p1: null, p2: null, date: "Jue 6 Mar", score1: null, score2: null },
+      { p1: null, p2: null, date: "Vie 7 Mar", score1: null, score2: null },
+    ],
+    sf: [
+      { p1: null, p2: null, date: "Lun 10 Mar", score1: null, score2: null },
+      { p1: null, p2: null, date: "Mar 11 Mar", score1: null, score2: null },
+    ],
+    f:  [{ p1: null, p2: null, date: "Lun 17 Mar", score1: null, score2: null }],
+    tp: [{ p1: null, p2: null, date: "Vie 14 Mar", score1: null, score2: null }],
+  },
+  cons_gc: {
+    sf: [
+      { p1: null, p2: null, date: "Mié 12 Mar", score1: null, score2: null },
+      { p1: null, p2: null, date: "Jue 13 Mar", score1: null, score2: null },
+    ],
+    f: [{ p1: null, p2: null, date: "Mar 18 Mar", score1: null, score2: null }],
+  },
+  cons_pc: {
+    sf: [
+      { p1: null, p2: null, date: "Mié 12 Mar", score1: null, score2: null },
+      { p1: null, p2: null, date: "Jue 13 Mar", score1: null, score2: null },
+    ],
+    f: [{ p1: null, p2: null, date: "Mar 18 Mar", score1: null, score2: null }],
+  }
+};
+
+// ═══════════════════════════════════════════════════════════
+//  LÓGICA
+// ═══════════════════════════════════════════════════════════
+
+function computeRanking() {
+  const stats = {};
+  PLAYERS.forEach(p => stats[p] = { pts: 0, v: 0, d: 0, pj: 0, setDiff: 0 });
+
+  ROUNDS.forEach(round => {
+    round.matches.forEach(m => {
+      if (m.score1 === null || m.score2 === null) return;
+      if (!stats[m.p1] || !stats[m.p2]) return;
+      stats[m.p1].pj++;
+      stats[m.p2].pj++;
+      stats[m.p1].setDiff += m.score1 - m.score2;
+      stats[m.p2].setDiff += m.score2 - m.score1;
+      if (m.score1 > m.score2) {
+        stats[m.p1].pts += 2; stats[m.p1].v++;
+        stats[m.p2].d++;
+      } else {
+        stats[m.p2].pts += 2; stats[m.p2].v++;
+        stats[m.p1].d++;
+      }
+    });
+  });
+
+  return PLAYERS
+    .map(p => ({ name: p, ...stats[p] }))
+    .sort((a, b) => b.pts - a.pts || b.setDiff - a.setDiff || b.v - a.v);
+}
+
+function renderRanking() {
+  const ranked = computeRanking();
+  const body = document.getElementById('ranking-body');
+  body.innerHTML = ranked.map((p, i) => {
+    const rank = i + 1;
+    const isTop = rank <= 3;
+    const qualify = rank <= 8
+      ? `<span class="qualify-badge gc">Gran Camp.</span>`
+      : `<span class="qualify-badge pc">Peq. Camp.</span>`;
+    return `<tr>
+      <td class="rank-num ${isTop ? 'top3' : ''}">${rank}</td>
+      <td class="player-name-cell">${p.name}</td>
+      <td style="color:var(--muted);font-family:'DM Mono',monospace">${p.pj}</td>
+      <td style="color:var(--win);font-family:'DM Mono',monospace">${p.v}</td>
+      <td style="color:var(--lose);font-family:'DM Mono',monospace">${p.d}</td>
+      <td><span class="score-badge ${p.pts > 2 ? 'high' : ''}">${p.pts}</span></td>
+      <td>${qualify}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderRounds() {
+  const container = document.getElementById('rounds-container');
+  const totalRounds = ROUNDS.length;
+
+  container.innerHTML = ROUNDS.map((round, ri) => {
+    const allDone = round.matches.every(m => m.score1 !== null && m.score1 !== undefined && m.score2 !== null && m.p1 !== '???');
+    const anyDone = round.matches.some(m => m.score1 !== null && m.p1 !== '???');
+    const status = allDone ? 'done' : anyDone ? 'active' : 'pending';
+    const statusLabel = allDone ? 'Completada' : anyDone ? 'En curso' : 'Pendiente';
+
+    const matchesHtml = round.matches.map(m => {
+      const played = m.score1 !== null && m.p1 !== '???';
+      const p1win = played && m.score1 > m.score2;
+      const p2win = played && m.score2 > m.score1;
+      const isTbd = m.p1 === '???';
+
+      if (isTbd) {
+        return `<div class="match-row">
+          <span class="match-date">${m.date}</span>
+          <span class="match-tbd">Por definir</span>
+        </div>`;
+      }
+
+      return `<div class="match-row">
+        <span class="match-date">${m.date}</span>
+        <div class="match-players">
+          <span class="match-player ${p1win ? 'winner' : played ? 'loser' : ''}">${m.p1}</span>
+          <span class="match-vs">vs</span>
+          <span class="match-player ${p2win ? 'winner' : played ? 'loser' : ''}">${m.p2}</span>
+        </div>
+        <span class="match-score">${played ? m.score1 + '–' + m.score2 : '—'}</span>
+      </div>`;
+    }).join('');
+
+    return `<div class="round-card">
+      <div class="round-header">
+        <span class="round-title">${round.label}</span>
+        <span class="round-status ${status}">${statusLabel}</span>
+      </div>
+      ${matchesHtml}
+    </div>`;
+  }).join('');
+}
+
+function renderBracketCol(title, matches) {
+  const slotsHtml = matches.map(m => {
+    const p1 = m.p1 || 'Por definir';
+    const p2 = m.p2 || 'Por definir';
+    const p1win = m.score1 !== null && m.score1 > m.score2;
+    const p2win = m.score2 !== null && m.score2 > m.score1;
+    const tbd = !m.p1 && !m.p2;
+
+    return `<div class="bracket-match ${title === 'Final' ? 'final-match' : ''}">
+      <div class="bracket-slot ${p1win ? 'winner' : tbd ? 'tbd' : ''}">
+        <span>${p1}</span>
+        ${m.score1 !== null ? `<span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${m.score1}</span>` : ''}
+      </div>
+      <div style="text-align:center;font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;padding:2px 0;border-bottom:1px solid var(--border)">${m.date}</div>
+      <div class="bracket-slot ${p2win ? 'winner' : tbd ? 'tbd' : ''}">
+        <span>${p2}</span>
+        ${m.score2 !== null ? `<span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${m.score2}</span>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+
+  return `<div class="bracket-col">
+    <div class="bracket-col-header">${title}</div>
+    <div class="bracket-matches">${slotsHtml}</div>
+  </div>`;
+}
+
+function renderBracket() {
+  document.getElementById('bracket-gc').innerHTML =
+    renderBracketCol('Octavos', BRACKET.gc.qf) +
+    renderBracketCol('Semifinales', BRACKET.gc.sf) +
+    renderBracketCol('3er puesto', BRACKET.gc.tp) +
+    renderBracketCol('Final', BRACKET.gc.f);
+
+  document.getElementById('bracket-pc').innerHTML =
+    renderBracketCol('Octavos', BRACKET.pc.qf) +
+    renderBracketCol('Semifinales', BRACKET.pc.sf) +
+    renderBracketCol('3er puesto', BRACKET.pc.tp) +
+    renderBracketCol('Final', BRACKET.pc.f);
+
+  document.getElementById('bracket-cons').innerHTML =
+    `<div style="margin-right:32px">
+      <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:1px;margin-bottom:8px;padding:0 8px">CONS. GRAN CAMP.</div>
+      <div style="display:flex;gap:0">
+        ${renderBracketCol('Semifinales', BRACKET.cons_gc.sf)}
+        ${renderBracketCol('Final', BRACKET.cons_gc.f)}
+      </div>
+    </div>
+    <div>
+      <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--accent3);letter-spacing:1px;margin-bottom:8px;padding:0 8px">CONS. PEQ. CAMP.</div>
+      <div style="display:flex;gap:0">
+        ${renderBracketCol('Semifinales', BRACKET.cons_pc.sf)}
+        ${renderBracketCol('Final', BRACKET.cons_pc.f)}
+      </div>
+    </div>`;
+}
+
+function renderPlayers() {
+  const ranked = computeRanking();
+  const grid = document.getElementById('players-grid');
+  grid.innerHTML = ranked.map(p => {
+    const initials = p.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+    return `<div class="player-card">
+      <div class="player-avatar">${initials}</div>
+      <div class="player-card-name">${p.name}</div>
+      <div class="player-card-stats">
+        <span class="player-wins">${p.v}V</span> · ${p.d}D · <span style="color:var(--accent)">${p.pts} pts</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════════════════
+
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('s-' + id).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+
+// ── INIT ──
+renderRanking();
+renderRounds();
+renderBracket();
+renderPlayers();
+</script>
+</body>
+</html>
