@@ -172,6 +172,18 @@
   }
   .rank-num.top3 { color: var(--accent); }
   .player-name-cell { font-weight: 500; }
+  .exaequo-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1px 5px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
   .score-badge {
     display: inline-block;
     font-family: 'DM Mono', monospace;
@@ -933,54 +945,73 @@ function computeFinalRanking() {
   const statsByName = {};
   computeRanking(true).forEach(p => statsByName[p.name] = p);
 
-  // Sembrado Swiss para desempatar posiciones que no tienen partido decisorio
-  const seed = {};
-  computeRanking(false).forEach((p, i) => seed[p.name] = i);
-  const bySeed = (a, b) => (seed[a] ?? 99) - (seed[b] ?? 99);
+  // Diferencia de sets (ganados − perdidos) sobre todo el torneo, para
+  // desempatar posiciones que no tienen partido decisorio.
+  const sd = name => (statsByName[name] ? statsByName[name].setDiff : -999);
+  const bySetDiff = (a, b) => sd(b) - sd(a);
 
-  const order = [];
-  const add = p => { if (p && !order.includes(p)) order.push(p); };
+  const entries = [];   // { name, groupId, key }
+  const seen = new Set();
+  let gid = 0;
+
+  const addSolo = name => {
+    if (name && !seen.has(name)) { seen.add(name); entries.push({ name, groupId: 'g' + (++gid), key: null }); }
+  };
+  // Grupo sin partido decisorio: orden por dif. de sets; empate exacto → ex æquo.
+  const addGroup = names => {
+    const id = 'g' + (++gid);
+    names.filter(n => n && !seen.has(n)).sort(bySetDiff).forEach(n => {
+      seen.add(n); entries.push({ name: n, groupId: id, key: sd(n) });
+    });
+  };
 
   // Coloca un campeonato completo: Final (1º/2º), 3er puesto (3º/4º),
   // Consolante final (5º/6º) y perdedores de semis de consolante (7º/8º).
   function placeChampionship(champ, cons) {
     const f = champ.f[0], tp = champ.tp[0], cf = cons.f[0];
-    add(matchWinner(f)  || f.p1);  add(matchLoser(f)  || f.p2);
-    add(matchWinner(tp) || tp.p1); add(matchLoser(tp) || tp.p2);
-    add(matchWinner(cf) || cf.p1); add(matchLoser(cf) || cf.p2);
-    cons.sf.map(m => matchLoser(m) || m.p2).filter(Boolean).sort(bySeed).forEach(add);
+    addSolo(matchWinner(f)  || f.p1);  addSolo(matchLoser(f)  || f.p2);
+    addSolo(matchWinner(tp) || tp.p1); addSolo(matchLoser(tp) || tp.p2);
+    addSolo(matchWinner(cf) || cf.p1); addSolo(matchLoser(cf) || cf.p2);
+    addGroup(cons.sf.map(m => matchLoser(m) || m.p2));
   }
 
   placeChampionship(BRACKET.gc, BRACKET.cons_gc);   // puestos 1–8
   placeChampionship(BRACKET.pc, BRACKET.cons_pc);   // puestos 9–16
+  addGroup(BRACKET.barrages.matches.map(m => matchLoser(m) || m.p2)); // eliminados en barrajes
+  addGroup(PLAYERS.filter(n => !seen.has(n)));       // seguridad
 
-  // Eliminados en barrajes (no entraron a ningún campeonato)
-  BRACKET.barrages.matches.map(m => matchLoser(m) || m.p2)
-    .filter(Boolean).sort(bySeed).forEach(add);
-
-  // Seguridad: cualquier jugador que no haya quedado colocado
-  PLAYERS.slice().sort(bySeed).forEach(add);
-
-  return order.map(name => statsByName[name]).filter(Boolean);
+  // Asignación de puestos con ex æquo (ranking de competición: 1, 2, 2, 4…)
+  const result = [];
+  entries.forEach((e, idx) => {
+    const prev = entries[idx - 1];
+    const tie = prev && e.key !== null && prev.groupId === e.groupId && prev.key === e.key;
+    if (tie) {
+      result[idx - 1].exaequo = true;
+      result.push({ ...statsByName[e.name], rank: result[idx - 1].rank, exaequo: true });
+    } else {
+      result.push({ ...statsByName[e.name], rank: idx + 1, exaequo: false });
+    }
+  });
+  return result;
 }
 
 function renderRanking() {
   const ranked = computeFinalRanking();
   const granCamp = getGranCampSet();
   const body = document.getElementById('ranking-body');
-  body.innerHTML = ranked.map((p, i) => {
-    const rank = i + 1;
-    const isTop = rank <= 3;
+  body.innerHTML = ranked.map(p => {
+    const isTop = p.rank <= 3;
     const qualify = granCamp.has(p.name)
       ? `<span class="qualify-badge gc">Gran Camp.</span>`
       : `<span class="qualify-badge pc">Peq. Camp.</span>`;
+    const exaequo = p.exaequo ? ` <span class="exaequo-tag">ex æquo</span>` : '';
     return `<tr>
-      <td class="rank-num ${isTop ? 'top3' : ''}">${rank}</td>
-      <td class="player-name-cell">${p.name}</td>
+      <td class="rank-num ${isTop ? 'top3' : ''}">${p.rank}</td>
+      <td class="player-name-cell">${p.name}${exaequo}</td>
       <td style="color:var(--muted);font-family:'DM Mono',monospace">${p.pj}</td>
       <td style="color:var(--win);font-family:'DM Mono',monospace">${p.v}</td>
       <td style="color:var(--lose);font-family:'DM Mono',monospace">${p.d}</td>
-      <td><span class="score-badge ${p.pts > 2 ? 'high' : ''}">${p.pts}</span></td>
+      <td><span class="score-badge ${p.pts >= 2 ? 'high' : ''}">${p.pts}</span></td>
       <td>${qualify}</td>
     </tr>`;
   }).join('');
