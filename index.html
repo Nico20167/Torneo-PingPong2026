@@ -347,7 +347,7 @@
     border-radius: 10px;
     padding: 16px;
     transition: border-color 0.2s, transform 0.2s;
-    cursor: default;
+    cursor: pointer;
   }
   .player-card:hover { border-color: var(--accent); transform: translateY(-2px); }
   .player-avatar {
@@ -406,6 +406,120 @@
     font-size: 13px;
   }
   .empty-state .icon { font-size: 40px; margin-bottom: 12px; opacity: 0.4; }
+
+  /* ── MODAL JUGADOR ── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.72);
+    backdrop-filter: blur(3px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+  }
+  .modal-overlay.active { display: flex; animation: fadeIn 0.2s ease; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    width: 100%;
+    max-width: 560px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .modal-header {
+    padding: 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: relative;
+    background: var(--surface2);
+  }
+  .modal-avatar {
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 2px solid var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+  .modal-title { font-family: 'Bebas Neue', sans-serif; font-size: 30px; letter-spacing: 1px; line-height: 1; }
+  .modal-substats {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+  .modal-substats .v { color: var(--win); }
+  .modal-substats .d { color: var(--lose); }
+  .modal-substats .pts { color: var(--accent); }
+  .modal-close {
+    position: absolute;
+    top: 16px;
+    right: 18px;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 26px;
+    line-height: 1;
+    cursor: pointer;
+    transition: color 0.15s;
+  }
+  .modal-close:hover { color: var(--text); }
+  .modal-body { padding: 12px 0; overflow-y: auto; }
+  .pm-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .pm-row:last-child { border-bottom: none; }
+  .pm-info { flex: 1; min-width: 0; }
+  .pm-phase {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: block;
+  }
+  .pm-opp { font-size: 14px; }
+  .pm-opp .vs { color: var(--muted); font-family: 'DM Mono', monospace; font-size: 11px; margin-right: 4px; }
+  .pm-result {
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    font-weight: 500;
+    min-width: 44px;
+    text-align: right;
+  }
+  .pm-result.win { color: var(--win); }
+  .pm-result.loss { color: var(--lose); }
+  .pm-result.pending { color: var(--pending); font-size: 11px; }
+  .pm-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    width: 22px;
+    text-align: center;
+    border-radius: 4px;
+    padding: 2px 0;
+    flex-shrink: 0;
+  }
+  .pm-tag.win { color: var(--win); background: rgba(71,232,154,0.1); }
+  .pm-tag.loss { color: var(--lose); background: rgba(232,71,71,0.1); }
+  .pm-tag.pending { color: var(--pending); background: rgba(240,192,64,0.1); }
 </style>
 </head>
 <body>
@@ -446,7 +560,7 @@
 ═══════════════════════════════════════ -->
 <div class="section active" id="s-clasificacion">
   <div class="section-title">Clasificación</div>
-  <div class="section-sub">Tras 3 rondas Swiss — Top 8 → Gran Campeonato · Resto → Pequeño Campeonato</div>
+  <div class="section-sub">Clasificación general — rondas Swiss + cuadro final · badge según fase Swiss (Top 8 → Gran Campeonato)</div>
 
   <div class="info-box">
     <strong>Sistema de puntuación:</strong> 2 pts por victoria · 0 pts por derrota · En caso de empate: desempate por diferencia de sets, luego puntos totales.
@@ -536,8 +650,23 @@
 ═══════════════════════════════════════ -->
 <div class="section" id="s-jugadores">
   <div class="section-title">Jugadores</div>
-  <div class="section-sub">18 participantes · temporada 2026</div>
+  <div class="section-sub">18 participantes · temporada 2026 · haz clic en un jugador para ver sus partidos</div>
   <div class="players-grid" id="players-grid"></div>
+</div>
+
+<!-- MODAL DETALLE JUGADOR -->
+<div class="modal-overlay" id="player-modal" onclick="if(event.target===this)closePlayerDetail()">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-avatar" id="modal-avatar"></div>
+      <div>
+        <div class="modal-title" id="modal-name"></div>
+        <div class="modal-substats" id="modal-stats"></div>
+      </div>
+      <button class="modal-close" onclick="closePlayerDetail()">&times;</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
 </div>
 
 <!-- ═══════════════════════════════════════
@@ -672,7 +801,7 @@ const BRACKET = {
       { p1: "Tom", p2: "Nico N", date: "Mar 12 May 13:30", score1: 2, score2: 3 }, // 1e vs 8e
       { p1: "Maria", p2: "Bastien", date: "Lun 11 May 13:30", score1: 0, score2: 3 }, // 2e vs 7e
       { p1: "Nico M", p2: "Albert", date: "Jue 07 May horario libre", score1: 3, score2: 0 }, // 3e vs 6e
-      { p1: "Gonzalo", p2: "Loic", date: "Mar 12 May 13:30", score1: 1, score2: 3 }, // 4e vs 5e
+      { p1: "Gonzalo", p2: "Loïc", date: "Mar 12 May 13:30", score1: 1, score2: 3 }, // 4e vs 5e
     ],
     sf: [
       { p1: "Nico M", p2: "Loïc", date: "Jue 21 May - libre", score1: 3, score2: 1 },
@@ -718,26 +847,68 @@ const BRACKET = {
 //  LÓGICA
 // ═══════════════════════════════════════════════════════════
 
-function computeRanking() {
+// ── Recopilación de partidos (Swiss + cuadro final) ──
+function getSwissMatches() {
+  const all = [];
+  ROUNDS.forEach(round => {
+    round.matches.forEach(m => all.push({ ...m, phase: round.label }));
+  });
+  return all;
+}
+
+function getBracketMatches() {
+  const phases = [
+    ['Barraje', BRACKET.barrages.matches],
+    ['Gran Camp. · Cuartos', BRACKET.gc.qf],
+    ['Gran Camp. · Semifinal', BRACKET.gc.sf],
+    ['Gran Camp. · 3er puesto', BRACKET.gc.tp],
+    ['Gran Camp. · Final', BRACKET.gc.f],
+    ['Peq. Camp. · Cuartos', BRACKET.pc.qf],
+    ['Peq. Camp. · Semifinal', BRACKET.pc.sf],
+    ['Peq. Camp. · 3er puesto', BRACKET.pc.tp],
+    ['Peq. Camp. · Final', BRACKET.pc.f],
+    ['Cons. Gran Camp. · Semifinal', BRACKET.cons_gc.sf],
+    ['Cons. Gran Camp. · Final', BRACKET.cons_gc.f],
+    ['Cons. Peq. Camp. · Semifinal', BRACKET.cons_pc.sf],
+    ['Cons. Peq. Camp. · Final', BRACKET.cons_pc.f],
+  ];
+  const all = [];
+  phases.forEach(([label, matches]) => {
+    matches.forEach(m => all.push({ ...m, phase: label }));
+  });
+  return all;
+}
+
+function getAllMatches() {
+  return getSwissMatches().concat(getBracketMatches());
+}
+
+// Un partido cuenta solo si tiene resultado decisivo (sin nulos y sin empate 0–0)
+function isPlayed(m) {
+  return m.score1 !== null && m.score1 !== undefined &&
+         m.score2 !== null && m.score2 !== undefined &&
+         m.score1 !== m.score2;
+}
+
+function computeRanking(includeBracket = true) {
   const stats = {};
   PLAYERS.forEach(p => stats[p] = { pts: 0, v: 0, d: 0, pj: 0, setDiff: 0 });
 
-  ROUNDS.forEach(round => {
-    round.matches.forEach(m => {
-      if (m.score1 === null || m.score2 === null) return;
-      if (!stats[m.p1] || !stats[m.p2]) return;
-      stats[m.p1].pj++;
-      stats[m.p2].pj++;
-      stats[m.p1].setDiff += m.score1 - m.score2;
-      stats[m.p2].setDiff += m.score2 - m.score1;
-      if (m.score1 > m.score2) {
-        stats[m.p1].pts += 2; stats[m.p1].v++;
-        stats[m.p2].d++;
-      } else {
-        stats[m.p2].pts += 2; stats[m.p2].v++;
-        stats[m.p1].d++;
-      }
-    });
+  const matches = includeBracket ? getAllMatches() : getSwissMatches();
+  matches.forEach(m => {
+    if (!isPlayed(m)) return;
+    if (!stats[m.p1] || !stats[m.p2]) return;
+    stats[m.p1].pj++;
+    stats[m.p2].pj++;
+    stats[m.p1].setDiff += m.score1 - m.score2;
+    stats[m.p2].setDiff += m.score2 - m.score1;
+    if (m.score1 > m.score2) {
+      stats[m.p1].pts += 2; stats[m.p1].v++;
+      stats[m.p2].d++;
+    } else {
+      stats[m.p2].pts += 2; stats[m.p2].v++;
+      stats[m.p1].d++;
+    }
   });
 
   return PLAYERS
@@ -745,13 +916,19 @@ function computeRanking() {
     .sort((a, b) => b.pts - a.pts || b.setDiff - a.setDiff || b.v - a.v);
 }
 
+// Conjunto de clasificados al Gran Campeonato (Top 8 tras la fase Swiss)
+function getGranCampSet() {
+  return new Set(computeRanking(false).slice(0, 8).map(p => p.name));
+}
+
 function renderRanking() {
   const ranked = computeRanking();
+  const granCamp = getGranCampSet();
   const body = document.getElementById('ranking-body');
   body.innerHTML = ranked.map((p, i) => {
     const rank = i + 1;
     const isTop = rank <= 3;
-    const qualify = rank <= 8
+    const qualify = granCamp.has(p.name)
       ? `<span class="qualify-badge gc">Gran Camp.</span>`
       : `<span class="qualify-badge pc">Peq. Camp.</span>`;
     return `<tr>
@@ -874,13 +1051,16 @@ function renderBracket() {
     </div>`;
 }
 
+function initials(name) {
+  return name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+}
+
 function renderPlayers() {
   const ranked = computeRanking();
   const grid = document.getElementById('players-grid');
   grid.innerHTML = ranked.map(p => {
-    const initials = p.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
-    return `<div class="player-card">
-      <div class="player-avatar">${initials}</div>
+    return `<div class="player-card" onclick="showPlayerDetail('${p.name}')">
+      <div class="player-avatar">${initials(p.name)}</div>
       <div class="player-card-name">${p.name}</div>
       <div class="player-card-stats">
         <span class="player-wins">${p.v}V</span> · ${p.d}D · <span style="color:var(--accent)">${p.pts} pts</span>
@@ -888,6 +1068,68 @@ function renderPlayers() {
     </div>`;
   }).join('');
 }
+
+// ── DETALLE DE JUGADOR ──
+function getPlayerMatches(name) {
+  return getAllMatches()
+    .filter(m => m.p1 === name || m.p2 === name)
+    .map(m => {
+      const isP1 = m.p1 === name;
+      const opp = isP1 ? m.p2 : m.p1;
+      const myScore = isP1 ? m.score1 : m.score2;
+      const oppScore = isP1 ? m.score2 : m.score1;
+      const played = isPlayed(m);
+      const won = played && myScore > oppScore;
+      return { phase: m.phase, date: m.date, opp, myScore, oppScore, played, won };
+    });
+}
+
+function showPlayerDetail(name) {
+  const matches = getPlayerMatches(name);
+  const stats = computeRanking().find(p => p.name === name) || { v: 0, d: 0, pts: 0, pj: 0 };
+
+  document.getElementById('modal-avatar').textContent = initials(name);
+  document.getElementById('modal-name').textContent = name;
+  document.getElementById('modal-stats').innerHTML =
+    `${stats.pj} PJ · <span class="v">${stats.v}V</span> · <span class="d">${stats.d}D</span> · <span class="pts">${stats.pts} pts</span>`;
+
+  const body = document.getElementById('modal-body');
+  if (matches.length === 0) {
+    body.innerHTML = `<div class="empty-state"><div class="icon">🏓</div>Sin partidos registrados</div>`;
+  } else {
+    body.innerHTML = matches.map(m => {
+      let tag, resultClass, resultText;
+      if (!m.played) {
+        tag = `<span class="pm-tag pending">·</span>`;
+        resultClass = 'pending';
+        resultText = 'Por jugar';
+      } else {
+        const cls = m.won ? 'win' : 'loss';
+        tag = `<span class="pm-tag ${cls}">${m.won ? 'G' : 'P'}</span>`;
+        resultClass = cls;
+        resultText = `${m.myScore}–${m.oppScore}`;
+      }
+      return `<div class="pm-row">
+        ${tag}
+        <div class="pm-info">
+          <span class="pm-phase">${m.phase} · ${m.date}</span>
+          <span class="pm-opp"><span class="vs">vs</span>${m.opp}</span>
+        </div>
+        <span class="pm-result ${resultClass}">${resultText}</span>
+      </div>`;
+    }).join('');
+  }
+
+  document.getElementById('player-modal').classList.add('active');
+}
+
+function closePlayerDetail() {
+  document.getElementById('player-modal').classList.remove('active');
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closePlayerDetail();
+});
 
 // ═══════════════════════════════════════════════════════════
 //  NAVIGATION
