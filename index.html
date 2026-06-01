@@ -560,11 +560,12 @@
 ═══════════════════════════════════════ -->
 <div class="section active" id="s-clasificacion">
   <div class="section-title">Clasificación</div>
-  <div class="section-sub">Clasificación general — rondas Swiss + cuadro final · badge según fase Swiss (Top 8 → Gran Campeonato)</div>
+  <div class="section-sub">Clasificación final — determinada por el cuadro final · Gran Campeonato (1–8) por encima del Pequeño Campeonato (9–16) · stats acumuladas Swiss + cuadro</div>
 
   <div class="info-box">
-    <strong>Sistema de puntuación:</strong> 2 pts por victoria · 0 pts por derrota · En caso de empate: desempate por diferencia de sets, luego puntos totales.
-    <br><strong>Clasificación:</strong> Los <strong>8 primeros</strong> acceden al Gran Campeonato · Los <strong>10 restantes</strong> al Pequeño Campeonato.
+    <strong>Orden del clasificación final:</strong> lo determina la posición alcanzada en el cuadro final, no los puntos acumulados. Todo el <strong>Gran Campeonato (puestos 1–8)</strong> queda por encima del <strong>Pequeño Campeonato (9–16)</strong>; los eliminados en barrajes cierran la tabla.
+    <br><strong>Dentro de cada campeonato:</strong> Final → 1º/2º · 3er puesto → 3º/4º · Consolante → 5º a 8º.
+    <br><strong>Columnas PJ/V/D/Pts:</strong> estadísticas acumuladas de toda la temporada (Swiss + cuadro final).
   </div>
 
   <table class="ranking-table" id="ranking-table">
@@ -921,8 +922,50 @@ function getGranCampSet() {
   return new Set(computeRanking(false).slice(0, 8).map(p => p.name));
 }
 
+// ── CLASIFICACIÓN FINAL ──
+// El orden NO se decide por puntos acumulados, sino por la posición alcanzada
+// en el cuadro final. Todo el Gran Campeonato (puestos 1–8) queda por encima
+// del Pequeño Campeonato (9–16), y los eliminados en barrajes al final.
+function matchWinner(m) { return isPlayed(m) ? (m.score1 > m.score2 ? m.p1 : m.p2) : null; }
+function matchLoser(m)  { return isPlayed(m) ? (m.score1 > m.score2 ? m.p2 : m.p1) : null; }
+
+function computeFinalRanking() {
+  const statsByName = {};
+  computeRanking(true).forEach(p => statsByName[p.name] = p);
+
+  // Sembrado Swiss para desempatar posiciones que no tienen partido decisorio
+  const seed = {};
+  computeRanking(false).forEach((p, i) => seed[p.name] = i);
+  const bySeed = (a, b) => (seed[a] ?? 99) - (seed[b] ?? 99);
+
+  const order = [];
+  const add = p => { if (p && !order.includes(p)) order.push(p); };
+
+  // Coloca un campeonato completo: Final (1º/2º), 3er puesto (3º/4º),
+  // Consolante final (5º/6º) y perdedores de semis de consolante (7º/8º).
+  function placeChampionship(champ, cons) {
+    const f = champ.f[0], tp = champ.tp[0], cf = cons.f[0];
+    add(matchWinner(f)  || f.p1);  add(matchLoser(f)  || f.p2);
+    add(matchWinner(tp) || tp.p1); add(matchLoser(tp) || tp.p2);
+    add(matchWinner(cf) || cf.p1); add(matchLoser(cf) || cf.p2);
+    cons.sf.map(m => matchLoser(m) || m.p2).filter(Boolean).sort(bySeed).forEach(add);
+  }
+
+  placeChampionship(BRACKET.gc, BRACKET.cons_gc);   // puestos 1–8
+  placeChampionship(BRACKET.pc, BRACKET.cons_pc);   // puestos 9–16
+
+  // Eliminados en barrajes (no entraron a ningún campeonato)
+  BRACKET.barrages.matches.map(m => matchLoser(m) || m.p2)
+    .filter(Boolean).sort(bySeed).forEach(add);
+
+  // Seguridad: cualquier jugador que no haya quedado colocado
+  PLAYERS.slice().sort(bySeed).forEach(add);
+
+  return order.map(name => statsByName[name]).filter(Boolean);
+}
+
 function renderRanking() {
-  const ranked = computeRanking();
+  const ranked = computeFinalRanking();
   const granCamp = getGranCampSet();
   const body = document.getElementById('ranking-body');
   body.innerHTML = ranked.map((p, i) => {
@@ -1056,7 +1099,7 @@ function initials(name) {
 }
 
 function renderPlayers() {
-  const ranked = computeRanking();
+  const ranked = computeFinalRanking();
   const grid = document.getElementById('players-grid');
   grid.innerHTML = ranked.map(p => {
     return `<div class="player-card" onclick="showPlayerDetail('${p.name}')">
